@@ -6,9 +6,9 @@
 
 而本项目采用深度学习的方式，去除了字符分割这一步骤
 
-训练的数据集为CCPD（https://github.com/detectRecog/CCPD）
+训练的数据集为CCPD https://github.com/detectRecog/CCPD
 
-对于车牌定位，选用了yolov5模型（https://github.com/ultralytics/yolov5）
+对于车牌定位，选用了yolov5模型 https://github.com/ultralytics/yolov5
 
 对于字符识别，选用了CRNN（CNN+RNN+CTCloss）模型  车牌正确率：89% 字符正确率：97%
 
