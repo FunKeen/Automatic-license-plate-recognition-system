@@ -27,6 +27,7 @@ class Config:
 
     # 保存路径
     saved_model_path = 'checkpoint.pth'
+    crnn_model_path = 'crnn/crnn.pth'
 
 
 config = Config()

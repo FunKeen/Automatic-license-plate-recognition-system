@@ -12,7 +12,7 @@ from crnn.model import CRNN
 from crnn.config import config
 import numpy as np
 
-from CRNNInferencer import Decoder  # 导入解码器
+from ModelCRNN import Decoder  # 导入解码器
 
 import argparse
 

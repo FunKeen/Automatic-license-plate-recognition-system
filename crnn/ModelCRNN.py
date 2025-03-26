@@ -30,8 +30,8 @@ class Decoder:
         return text
 
 
-class CRNNInferencer:
-    def __init__(self, model_path, device):
+class ModelCRNN:
+    def __init__(self, model_path=config.saved_model_path, device=config.device):
         self.model_path = model_path
         self.device = device
         self.decoder = Decoder(config.characters)
