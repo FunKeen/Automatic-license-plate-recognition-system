@@ -5,7 +5,7 @@ from PySide6.QtGui import QPainter, QPen, QColor
 from PySide6.QtWidgets import (QMainWindow, QPushButton,
                                QLabel, QFileDialog, QWidget, QVBoxLayout,
                                QScrollArea)
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QRect
 
 from crnn.ModelCRNN import Decoder
 from crnn.model import CRNN
@@ -80,57 +80,74 @@ class Alprs(QMainWindow):
             "图片文件 (*.png *.jpg *.jpeg *.bmp *.gif)"
         )
         if file_path:
-            img, plates = self.plate_positioning(file_path)
-            results = self.auto_recognition(plates)
+            img, results = self.plate_positioning_recognition(file_path)
+            out_img = self.draw(img, results)
             if not img is None:
-                scaled_width = int(img.width() * 0.5)
-                scaled_height = int(img.height() * 0.5)
-
-                scaled_pixmap = img.scaled(
+                scaled_width = int(out_img.width() * 0.5)
+                scaled_height = int(out_img.height() * 0.5)
+                scaled_pixmap = out_img.scaled(
                     scaled_width,
                     scaled_height,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation
                 )
-                self.label.setText(f'{results}')
                 self.image_label.setPixmap(scaled_pixmap)
                 self.image_label.setAlignment(Qt.AlignCenter)
             else:
                 self.image_label.setText("无法加载图片")
 
-    def plate_positioning(self, img_path):
+    def plate_positioning_recognition(self, img_path):
         img = cv2.imread(img_path)
         # 图像预处理
-        results = self.yolo(img, 640)
+        pre_img = self.yolo(img, 640)
         # 提取检测结果
-        detections = results.xyxy[0].cpu()
+        detections = pre_img.xyxy[0].cpu()
         # 遍历所有检测到的车牌裁剪车牌区域
-        plates = []
+        results = []
         for i, det in enumerate(detections):
             x1, y1, x2, y2, conf, cls_id = det
-            if conf < self.yolo.conf:  # 置信度低于阈值则跳过
+            if det[4] < self.yolo.conf:  # 置信度低于阈值则跳过
                 continue
-            plates.append((i, img[int(y1):int(y2), int(x1):int(x2)]))
-            # 在原始图像上绘制边界框（可视化）
-            cv2.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 2)
-            cv2.putText(img, f"Id:{i} cong:{conf:.2f}", (int(x1), int(y1) - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        return QPixmap.fromImage(self.numpy2qimage(img)), plates
+            plate = self.auto_recognition(img[int(y1):int(y2), int(x1):int(x2)])
+            results.append((plate, det))
+        return self.numpy2qimage(img), results
 
-    def auto_recognition(self, plates):
-        if plates:
-            results = []
-            for i, plate in plates:
-                img = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
-                img = cv2.resize(img, (256, 32))
-                img = (img / 255.0 - 0.5) / 0.5  # 归一化
-                img_tensor = torch.FloatTensor(img).unsqueeze(0).unsqueeze(0).to('cpu')
-                with torch.no_grad():
-                    logits = self.crnn(img_tensor)
-                results.append((i, self.decoder.decode(logits)))
-            return results
+    def auto_recognition(self, plate):
+        img = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
+        img = cv2.resize(img, (256, 32))
+        img = (img / 255.0 - 0.5) / 0.5  # 归一化
+        img_tensor = torch.FloatTensor(img).unsqueeze(0).unsqueeze(0).to('cpu')
+        with torch.no_grad():
+            logits = self.crnn(img_tensor)
+        return self.decoder.decode(logits)
 
     def numpy2qimage(self, img):
-        height, width, channel = img.shape
+        if img.shape[2] == 3:
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        else:
+            img_rgb = img
+        height, width, channel = img_rgb.shape
         bytes_per_line = 3 * width
-        return QImage(img.data, width, height, bytes_per_line, QImage.Format_RGB888)
+        return QImage(img_rgb.data, width, height, bytes_per_line, QImage.Format_RGB888)
+
+    # 可视化结果
+    def draw(self, img, results):
+        if results:
+            painter = QPainter(img)
+            # 设置画笔属性（颜色、线宽）
+            pen = QPen(QColor(255, 0, 0))  # 红色边框
+            pen.setWidth(3)  # 线宽3像素
+            painter.setPen(pen)
+            for plate, det in results:
+                x1, y1, x2, y2, conf, cls_id = det
+                painter.drawRect(QRect(int(x1), int(y1), int(x2 - x1), int(y2 - y1)))
+                if cls_id == 1:
+                    painter.drawText(int(x1), int(y1) - 10, f'蓝牌：{plate} {conf:.2f}')
+                elif cls_id == 0:
+                    painter.drawText(int(x1), int(y1) - 10, f'绿牌：{plate} {conf:.2f}')
+            painter.end()
+            self.label.setText(f'结果如下')
+            return QPixmap.fromImage(img)
+        else:
+            self.label.setText(f'未识别到车牌')
+            return QPixmap.fromImage(img)
