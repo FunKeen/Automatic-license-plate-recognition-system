@@ -1,12 +1,14 @@
 import os
 import re
+from multiprocessing import Process
+
 import cv2
 
 
 def get_labels(image_dir):
     # 获取所有图片
     images_name = [f for f in os.listdir(image_dir) if f.endswith('.jpg')]
-    print(f"{dirname} start")
+    print(f"{image_dir} start")
     # 遍历图片 获取图片信息
 
     for image_name in images_name:
@@ -29,7 +31,13 @@ def get_labels(image_dir):
                     f.write(f"0 {cx:.6f} {cy:.6f} {bw:.6f} {bh:.6f}\n")
             elif len(split_image_name) == 1:
                 f.write("\n")
-    print(f"{dirname} is completed")
+    print(f"{image_dir} is completed")
+
+
+def mytask(file_path):
+    print(f"进程 {file_path} (PID: {os.getpid()}) 执行")
+    print(file_path)
+    get_labels(file_path)
 
 
 if __name__ == '__main__':
@@ -42,5 +50,11 @@ if __name__ == '__main__':
     os.makedirs(os.path.join(image_dir.replace('images', 'labels'), 'test'), exist_ok=True)
 
     # 调用函数
-    for dirname in os.listdir(image_dir):
-        get_labels(os.path.join(image_dir, dirname))
+    files = ['train', 'val', 'test']
+    processes = []
+    for file in files:
+        p = Process(target=mytask, args=(os.path.join(image_dir, file),))
+        processes.append(p)
+        p.start()  # 立即启动进程
+    for p in processes:
+        p.join()
