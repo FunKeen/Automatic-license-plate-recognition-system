@@ -89,10 +89,6 @@ class Alprs(QMainWindow):
         confidence_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         main_layout.addLayout(confidence_layout)
 
-        # 添加标签
-        self.label = QLabel('请选择图片!')
-        main_layout.addWidget(self.label, alignment=Qt.AlignmentFlag.AlignCenter)
-
         # 图片显示区域
         self.image_label = QLabel()
         self.image_label.setMinimumSize(1, 1)
