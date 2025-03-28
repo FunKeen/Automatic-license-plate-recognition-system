@@ -10,7 +10,7 @@
 
 对于车牌定位，选用了yolov5模型 https://github.com/ultralytics/yolov5
 
-对于字符识别，选用了CRNN（CNN+RNN+CTCloss）模型  车牌正确率：89% 字符正确率：97%
+对于字符识别，选用了CRNN（CNN+RNN+CTCloss）模型  车牌正确率：95.9% 字符正确率：99.1%
 
 
 scrips中包括了给类脚本，用于预处理数据，方便测试
