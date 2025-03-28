@@ -3,7 +3,7 @@ import torch
 from PIL.ImageQt import QImage, QPixmap
 from PySide6.QtGui import QPainter, QPen, QColor, QFont
 from PySide6.QtWidgets import (QMainWindow, QPushButton,
-                               QLabel, QFileDialog, QWidget, QVBoxLayout, )
+                               QLabel, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, QSlider, )
 from PySide6.QtCore import Qt, QRect
 
 from crnn.ModelCRNN import Decoder
@@ -15,20 +15,27 @@ characters = 'ABCDEFGHJKLMNOPQRSTUVWXYZ0123456789皖沪津渝冀晋蒙辽吉黑�
 class Alprs(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.btn_increase = None
+        self.btn_decrease = None
+        self.label_confidence = None
         self.btn_open = None
         self.label = None
         self.image_label = None
         # 配置画笔属性（颜色、线宽）
-        self.pen = QPen(QColor(255, 0, 0))
-        self.pen.setWidth(2)
+        self.pen_red = QPen(QColor(255, 0, 0))
+        self.pen_red.setWidth(2)
+        self.pen_white = QPen(QColor(255, 255, 255))
+        self.pen_white.setWidth(2)
         # 配置字体大小
         self.font = QFont()
         self.font.setPointSize(12)
 
         self.init_ui()
         self.yolo = self.load_yolo('yolov5/runs/train/exp2/weights/best.pt')
-        self.crnn = self.load_crnn('crnn/crnn.pth', 'cpu')
+        self.crnn = self.load_crnn('crnn/best_crnn.pth', 'cpu')
         self.decoder = Decoder(characters)
+
+        self.cls = ['绿牌', '蓝牌']
 
     def load_yolo(self, model_path):
         # 加载模型
@@ -63,6 +70,25 @@ class Alprs(QMainWindow):
         self.btn_open.clicked.connect(self.open_image)
         main_layout.addWidget(self.btn_open, alignment=Qt.AlignmentFlag.AlignTop)
 
+        # 置信度
+        confidence_layout = QHBoxLayout()
+        confidence_layout.addWidget(QLabel("置信度阈值："))
+        self.label_confidence = QLabel("0.50")  # 数值显示
+        self.label_confidence.setFixedWidth(40)
+        self.label_confidence.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.btn_decrease = QPushButton("-")  # 减按钮
+        self.btn_decrease.setFixedWidth(30)
+        self.btn_decrease.clicked.connect(self.on_decrease)
+        self.btn_increase = QPushButton("+")  # 加按钮
+        self.btn_increase.setFixedWidth(30)
+        self.btn_increase.clicked.connect(self.on_increase)
+
+        confidence_layout.addWidget(self.label_confidence)
+        confidence_layout.addWidget(self.btn_decrease)
+        confidence_layout.addWidget(self.btn_increase)
+        confidence_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        main_layout.addLayout(confidence_layout)
+
         # 添加标签
         self.label = QLabel('请选择图片!')
         main_layout.addWidget(self.label, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -70,7 +96,27 @@ class Alprs(QMainWindow):
         # 图片显示区域
         self.image_label = QLabel()
         self.image_label.setMinimumSize(1, 1)
+        self.image_label.setPixmap(QPixmap.fromImage(self.numpy2qimage(cv2.imread('show.jpg'))))
         main_layout.addWidget(self.image_label, alignment=Qt.AlignmentFlag.AlignBottom)
+
+    def on_decrease(self):
+        current = float(self.label_confidence.text())
+        new_value = max(0.0, round(current - 0.05, 2))  # 每次减少0.05
+        self.update_confidence_display(new_value)
+
+    def on_increase(self):
+        current = float(self.label_confidence.text())
+        new_value = min(1.0, round(current + 0.05, 2))  # 每次增加0.05
+        self.update_confidence_display(new_value)
+
+    def update_confidence_display(self, value):
+        # 更新显示并保存值
+        self.label_confidence.setText(f"{value:.2f}")
+        self.yolo.conf = value
+
+        # 更新按钮状态
+        self.btn_decrease.setEnabled(value > 0.05)
+        self.btn_increase.setEnabled(value < 0.95)
 
     def open_image(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -137,17 +183,16 @@ class Alprs(QMainWindow):
             )
             painter = QPainter(img)
             painter.setFont(self.font)
-            painter.setPen(self.pen)
+            painter.setPen(self.pen_red)
             for plate, det in results:
                 x1, y1, x2, y2 = list(map(lambda x: x * 0.5, det[:4]))
                 conf, cls_id = det[4:]
+                cls_id = int(cls_id)
                 painter.drawRect(QRect(int(x1), int(y1), int(x2 - x1), int(y2 - y1)))
-                if cls_id == 1:
-                    painter.drawText(int(x1), int(y1) - 10, f'蓝牌：{plate} {conf:.2f}')
-                    print(f'蓝牌：{plate} {conf:.2f}')
-                elif cls_id == 0:
-                    painter.drawText(int(x1), int(y1) - 10, f'绿牌：{plate} {conf:.2f}')
-                    print(f'绿牌：{plate} {conf:.2f}')
+                painter.drawText(int(x1) - 1, int(y1) - 11, f'{self.cls[cls_id]}：{plate} {conf:.2f}')
+                painter.setPen(self.pen_white)
+                painter.drawText(int(x1), int(y1) - 10, f'{self.cls[cls_id]}：{plate} {conf:.2f}')
+                print(f'{self.cls[cls_id]}：{plate} {conf:.2f}')
             painter.end()
             self.label.setText(f'结果如下')
             return QPixmap.fromImage(img)

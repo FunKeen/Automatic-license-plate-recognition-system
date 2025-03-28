@@ -1,8 +1,9 @@
+import os
 import cv2
 import torch
-from torch.utils.data import Dataset
 from torchvision import transforms
-import os
+from torch.utils.data import Dataset
+
 from crnn.config import config
 
 
