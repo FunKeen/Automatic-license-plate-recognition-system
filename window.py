@@ -31,7 +31,7 @@ class Alprs(QMainWindow):
         self.font.setPointSize(12)
 
         self.init_ui()
-        self.yolo = self.load_yolo('yolov5/runs/train/exp2/weights/best.pt')
+        self.yolo = self.load_yolo('yolov5/runs/train/exp3/weights/best.pt')
         self.crnn = self.load_crnn('crnn/best_crnn.pth', 'cpu')
         self.decoder = Decoder(characters)
 
@@ -57,7 +57,7 @@ class Alprs(QMainWindow):
 
     def init_ui(self):
         self.setWindowTitle('车牌自动识别系统')
-        self.setGeometry(100, 100, 400, 650)
+        self.setGeometry(100, 100, 400, 700)
 
         # 创建主控件和布局
         central_widget = QWidget()
@@ -97,7 +97,7 @@ class Alprs(QMainWindow):
         self.image_label = QLabel()
         self.image_label.setMinimumSize(1, 1)
         self.image_label.setPixmap(QPixmap.fromImage(self.numpy2qimage(cv2.imread('show.jpg'))))
-        main_layout.addWidget(self.image_label, alignment=Qt.AlignmentFlag.AlignBottom)
+        main_layout.addWidget(self.image_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def on_decrease(self):
         current = float(self.label_confidence.text())
@@ -127,6 +127,15 @@ class Alprs(QMainWindow):
         )
         if file_path:
             img, results = self.plate_positioning_recognition(file_path)
+            # 缩小图片，方便显示
+            scaled_width = int(img.width() * 0.5)
+            scaled_height = int(img.height() * 0.5)
+            img = img.scaled(
+                scaled_width,
+                scaled_height,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
             out_img = self.draw(img, results)
             if not img is None:
                 self.image_label.setPixmap(out_img)
@@ -172,15 +181,6 @@ class Alprs(QMainWindow):
     # 可视化结果
     def draw(self, img, results):
         if results:
-            # 缩小图片，方便显示
-            scaled_width = int(img.width() * 0.5)
-            scaled_height = int(img.height() * 0.5)
-            img = img.scaled(
-                scaled_width,
-                scaled_height,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation
-            )
             painter = QPainter(img)
             painter.setFont(self.font)
             painter.setPen(self.pen_red)
