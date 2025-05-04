@@ -34,6 +34,13 @@ class OCRDataset(Dataset):
         img_path, label = self.labels[idx]
         # 读取并预处理图像
         img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+        # # 动态调整尺寸
+        # h, w = img.shape
+        # target_h = config.img_height
+        # scale = target_h / h
+        # target_w = int(w * scale)
+        # # 缩放并填充
+        # img = cv2.resize(img, (target_w, target_h))
         img = cv2.resize(img, (config.img_width, config.img_height))
         img = self.transform(img)  # (1, H, W)
         # 转换标签为索引

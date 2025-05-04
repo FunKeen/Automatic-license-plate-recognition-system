@@ -7,27 +7,28 @@ class CRNN(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
         self.cnn = nn.Sequential(
+            # 1
             nn.Conv2d(1, 64, 3, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-
+            # 2
             nn.Conv2d(64, 128, 3, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-
+            # 3
             nn.Conv2d(128, 256, 3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(),
-
+            # 4
             nn.Conv2d(256, 256, 3, padding=1),
             nn.ReLU(),
             nn.MaxPool2d((2, 2), (2, 1)),
-
+            # 5
             nn.Conv2d(256, 512, 3, padding=1),
             nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.MaxPool2d((2, 2), (2, 1)),
-
+            # 6
             nn.Conv2d(512, 512, 3, padding=1),
             nn.BatchNorm2d(512),
             nn.ReLU(),
