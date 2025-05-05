@@ -31,8 +31,8 @@ class Alprs(QMainWindow):
         self.font.setPointSize(12)
 
         self.init_ui()
-        self.yolo = self.load_yolo('yolov5/runs/train/exp3/weights/best.pt')
-        self.crnn = self.load_crnn('crnn/best_crnn.pth', 'cpu')
+        self.yolo = self.load_yolo('yolov5/runs/train/exp3/weights/last.pt')
+        self.crnn = self.load_crnn('crnn/last.pth', 'cpu')
         self.decoder = Decoder(characters)
 
         self.cls = ['绿牌', '蓝牌']

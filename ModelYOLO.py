@@ -17,7 +17,7 @@ class ModelYOLO:
         self.model.conf = 0.7  # 置信度阈值（过滤低置信度检测）
         self.model.eval()  # 设置为推理模式
 
-        self.crnn = ModelCRNN('C:/Users/Keen/PycharmProjects/Alprs/crnn/crnn.pth')
+        self.crnn = ModelCRNN('crnn/best_crnn.pth')
 
     def __call__(self, img):
         # 将图像转为模型输入格式

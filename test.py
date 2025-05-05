@@ -28,7 +28,7 @@ def fun(path):
             count += 1
         # cv2.imwrite('show.jpg', img)
     end_time = time.time()  # 记录开始时间
-    return count / sum, sum // (end_time - start_time)
+    return count / sum, sum / (end_time - start_time)
 
 
 acp = []
@@ -39,5 +39,5 @@ for file in files:
     acp.append(cp)
     afps.append(fps)
 for i in range(len(files)):
-    print(f'场景：{files[i]} 准确率：{acp[i]:.2f}  FPS：{afps[i]}')
-print(f'平均：准确率：{(sum(acp) / len(files)):.2f}  FPS：{(sum(afps) / len(files))}')
+    print(f'场景：{files[i]} 准确率：{acp[i]:.4f}  FPS：{afps[i]:.4f}')
+print(f'平均：准确率：{(sum(acp) / len(files)):.4f}  FPS：{(sum(afps) // len(files))}')
