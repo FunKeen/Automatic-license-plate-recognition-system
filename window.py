@@ -96,7 +96,7 @@ class Alprs(QMainWindow):
         # 图片显示区域
         self.image_label = QLabel()
         self.image_label.setMinimumSize(1, 1)
-        self.image_label.setPixmap(QPixmap.fromImage(self.numpy2qimage(cv2.imread('show.jpg'))))
+        self.image_label.setPixmap(QPixmap.fromImage(self.numpy2qimage(cv2.imread('face.jpg'))))
         main_layout.addWidget(self.image_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def on_decrease(self):
